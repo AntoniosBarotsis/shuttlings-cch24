@@ -1,11 +1,6 @@
 use std::net::{Ipv4Addr, Ipv6Addr};
 
-use axum::{
-  extract::Query,
-  response::IntoResponse,
-  routing::get,
-  Router,
-};
+use axum::{extract::Query, response::IntoResponse, routing::get, Router};
 
 pub fn get_routes() -> Router {
   Router::new()
