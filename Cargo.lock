@@ -1793,6 +1793,8 @@ dependencies = [
  "axum 0.7.9",
  "cargo-manifest",
  "leaky-bucket",
+ "parking_lot",
+ "rand",
  "regex",
  "serde",
  "serde_json",
