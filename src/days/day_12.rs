@@ -139,7 +139,11 @@ impl Board {
 
     for i in 0..4 {
       for j in 0..4 {
-        res.cells[i][j] = if rand.r#gen::<bool>() { Cell::Cookie } else { Cell::Milk };
+        res.cells[i][j] = if rand.r#gen::<bool>() {
+          Cell::Cookie
+        } else {
+          Cell::Milk
+        };
       }
     }
 

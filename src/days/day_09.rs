@@ -1,7 +1,11 @@
-use std::{borrow::BorrowMut, sync::{Arc, Mutex, RwLock}};
+use std::sync::{Arc, RwLock};
 
 use axum::{
-  extract::State, http::{header, HeaderMap, StatusCode}, response::IntoResponse, routing::{get, post}, Router
+  extract::State,
+  http::{HeaderMap, StatusCode},
+  response::IntoResponse,
+  routing::post,
+  Router,
 };
 use leaky_bucket::RateLimiter;
 
@@ -15,7 +19,7 @@ fn create_bucket() -> RateLimiter {
 
 pub fn get_routes() -> Router {
   let limiter = Arc::new(RwLock::new(create_bucket()));
-  
+
   Router::new()
     .route("/9/milk", post(tasks))
     .route("/9/refill", post(task_4))
@@ -35,17 +39,20 @@ struct Data {
   pints: Option<f32>,
 }
 
-async fn tasks(state: State<MilkState>, headers: HeaderMap, data: String) -> Result<String, impl IntoResponse> {
+async fn tasks(
+  state: State<MilkState>,
+  headers: HeaderMap,
+  data: String,
+) -> Result<String, impl IntoResponse> {
   if !state.limiter.read().unwrap().try_acquire(1) {
-    return Err((StatusCode::TOO_MANY_REQUESTS, "No milk available\n").into_response())
+    return Err((StatusCode::TOO_MANY_REQUESTS, "No milk available\n").into_response());
   }
 
-  let c_type = headers.get("Content-Type")
-  .and_then(|c| c.to_str().ok());
+  let c_type = headers.get("Content-Type").and_then(|c| c.to_str().ok());
 
   if c_type == Some("application/json") {
-    let parsed = serde_json::from_str::<Data>(&data)
-      .map_err(|_e| StatusCode::BAD_REQUEST.into_response())?;
+    let parsed =
+      serde_json::from_str::<Data>(&data).map_err(|_e| StatusCode::BAD_REQUEST.into_response())?;
 
     let fields = [parsed.gallons, parsed.liters, parsed.litres, parsed.pints];
 
@@ -63,12 +70,11 @@ async fn tasks(state: State<MilkState>, headers: HeaderMap, data: String) -> Res
       (_, Some(gallons), _, _) => Ok(format!("{{\"gallons\":{gallons}}}")),
       (_, _, Some(pints), _) => Ok(format!("{{\"pints\":{pints}}}")),
       (_, _, _, Some(litres)) => Ok(format!("{{\"litres\":{litres}}}")),
-      _ => unreachable!()
+      _ => unreachable!(),
     }
-  }  else {
+  } else {
     Ok("Milk withdrawn\n".to_string())
   }
-
 }
 
 async fn task_4(state: State<MilkState>) -> StatusCode {

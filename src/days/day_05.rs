@@ -58,29 +58,32 @@ struct Order {
 //   }
 // }
 
-static ALLOWED_CONTENT_TYPES: [&str; 3] = ["application/yaml", "application/json", "application/toml"];
+static ALLOWED_CONTENT_TYPES: [&str; 3] =
+  ["application/yaml", "application/json", "application/toml"];
 
 #[allow(clippy::unwrap_used)]
 async fn task_1(headers: HeaderMap, data: String) -> Result<String, impl IntoResponse> {
   let content_type = headers.get("Content-Type").unwrap().to_str().unwrap();
 
   if !ALLOWED_CONTENT_TYPES.contains(&content_type) {
-    return Err(StatusCode::UNSUPPORTED_MEDIA_TYPE.into_response())
+    return Err(StatusCode::UNSUPPORTED_MEDIA_TYPE.into_response());
   }
 
   let data = match content_type {
     "application/yaml" => {
-      let mut parsed = serde_yaml::from_str::<Data>(&data).map_err(|_e| StatusCode::NO_CONTENT.into_response())?;
+      let mut parsed =
+        serde_yaml::from_str::<Data>(&data).map_err(|_e| StatusCode::NO_CONTENT.into_response())?;
       parsed.package.metadata.orders.retain(Option::is_some);
       toml::to_string(&parsed).unwrap()
-    },
+    }
     "application/json" => {
-      let mut parsed = serde_json::from_str::<Data>(&data).map_err(|_e| StatusCode::NO_CONTENT.into_response())?;
+      let mut parsed =
+        serde_json::from_str::<Data>(&data).map_err(|_e| StatusCode::NO_CONTENT.into_response())?;
       parsed.package.metadata.orders.retain(Option::is_some);
       toml::to_string(&parsed).unwrap()
-    },
+    }
     "application/toml" => data,
-    _ => unreachable!()
+    _ => unreachable!(),
   };
 
   dbg!(&data);
@@ -124,13 +127,14 @@ async fn task_1(headers: HeaderMap, data: String) -> Result<String, impl IntoRes
       } else {
         return err_res;
       }
-    },
+    }
     Err(_) => return Err((StatusCode::BAD_REQUEST, "Invalid manifest").into_response()),
   }
 
   dbg!(&data);
   dbg!(toml::from_str::<Data>(&data));
-  let parsed = toml::from_str::<Data>(&data).map_err(|_e| StatusCode::NO_CONTENT.into_response())?;
+  let parsed =
+    toml::from_str::<Data>(&data).map_err(|_e| StatusCode::NO_CONTENT.into_response())?;
 
   if parsed.package.metadata.orders.iter().all(Option::is_none) {
     return Err(StatusCode::NO_CONTENT.into_response());
